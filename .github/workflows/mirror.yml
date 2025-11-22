@@ -2,8 +2,8 @@ name: Firebase Mirror
 
 on:
   schedule:
-    # - cron: "0 */6 * * *" 
-    - cron: "*/1 * * * *"  # setiap 6 jam
+    - cron: "0 */6 * * *" 
+    # - cron: "*/1 * * * *"  # setiap 6 jam
   workflow_dispatch:        # bisa di-run manual jika perlu
 
 jobs:
