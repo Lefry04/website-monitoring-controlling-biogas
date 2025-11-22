@@ -1,0 +1,32 @@
+name: Firebase Mirror
+
+on:
+  schedule:
+    # - cron: "0 */6 * * *" 
+    - cron: "*/1 * * * *"  # setiap 6 jam
+  workflow_dispatch:        # bisa di-run manual jika perlu
+
+jobs:
+  run-mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Restore serviceAccountKey.json
+        env:
+          GOOGLE_SERVICE_KEY: ${{ secrets.GOOGLE_SERVICE_KEY }}
+        run: |
+          echo "$GOOGLE_SERVICE_KEY" > serviceAccountKey.json
+
+      - name: Run mirror script
+        run: node produksi_mirror_ultra.cjs
