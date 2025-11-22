@@ -17,9 +17,11 @@ cron.schedule("*/1 * * * *", async () => {
 
   try {
     const snapshot = await dbRealtime.ref("/ultrasonik/jarak").once("value");
-    const jarak = snapshot.val();
+    const jarakAsli = snapshot.val();
 
-    if (jarak !== null && jarak !== undefined) {
+    if (jarakAsli !== null && jarakAsli !== undefined) {
+      const jarak = 19 - jarakAsli; // dalam cm
+
       const collRef = dbFirestore.collection("ProduksiHarianUltrasonik");
 
       // ✅ 1️⃣ Ambil dokumen terakhir dari Firestore
