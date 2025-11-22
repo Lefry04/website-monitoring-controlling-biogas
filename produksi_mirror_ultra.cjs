@@ -12,7 +12,7 @@ const dbRealtime = admin.database();
 const dbFirestore = admin.firestore();
 
 // 🕐 Jalankan tiap 1 menit
-cron.schedule("*/1 * * * *", async () => {
+(async () => {
   console.log("⏰ Menyalin data dari Realtime Database ke Firestore...");
 
   try {
@@ -59,4 +59,4 @@ cron.schedule("*/1 * * * *", async () => {
   } catch (err) {
     console.error("❌ Gagal sinkronisasi:", err);
   }
-});
+}) ();
