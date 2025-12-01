@@ -54,9 +54,9 @@ const RealTime = () => {
     }
 
     // sensor jarak
-    let jarakPrev = sensor?.ultrasonik?.jarak;
-    let jarakMax = 19; // dalam cm
-    let jarakNow = jarakMax - jarakPrev;
+    // let jarakPrev = sensor?.ultrasonik?.jarak;
+    // let jarakMax = 19; // dalam cm
+    // let jarakNow = jarakMax - jarakPrev;
 
 
     // sensor suhu
@@ -107,7 +107,7 @@ const RealTime = () => {
 
                 <Monitoring sensor="Cairan Subtrat">
                     <Monitoring.Bar>
-                        <HorizontalBarCairGas value={jarakNow} max={jarakMax} satuan="%" />
+                        <HorizontalBarCairGas value={sensor?.ultrasonik?.jarak} max={19} satuan="%" />
                     </Monitoring.Bar>
                     <Monitoring.Desc labelcol="" label="Level Cairan Rendah" labelnilai="Status Cairan" nilai="Rendah" keadaan="Perlu diisi" />
                 </Monitoring>

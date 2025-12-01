@@ -10,34 +10,101 @@ import {
 } from "recharts";
 import { useEffect, useState } from "react";
 import { firestore } from "../../../services/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+// import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 
 export default function Example() {
 
     const [data, setData] = useState([]);
 
-    useEffect(() => {
-        const unsub = onSnapshot(collection(firestore, "ProduksiHarianUltrasonik"), (snapshot) => {
+    // useEffect(() => {
+    //     const unsub = onSnapshot(collection(firestore, "ProduksiHarianUltrasonik"), (snapshot) => {
 
+    //         const newData = snapshot.docs.map((doc) => {
+    //             const d = doc.data();
+    //             const waktu = d.waktu;
+
+    //             // Ubah format "7/11/2025 13.43.06" → Date object
+    //             let dateObj = null;
+    //             if (waktu) {
+    //                 try {
+    //                     const [tgl, jam] = waktu.split(" ");
+    //                     const [day, month, year] = tgl.split("/");
+    //                     const [hour, minute, second] = jam.split(".");
+    //                     const isoString = `${year}-${month.padStart(
+    //                         2,
+    //                         "0"
+    //                     )}-${day.padStart(2, "0")}T${hour}:${minute}:${second}`;
+    //                     dateObj = new Date(isoString);
+    //                 } catch (error) {
+    //                     console.warn("Format waktu tidak dikenali:", waktu);
+    //                 }
+    //             }
+
+    //             return {
+    //                 id: doc.id,
+    //                 ...d,
+    //                 dateObj,
+    //             };
+    //         });
+
+    //         // Urutkan data berdasarkan waktu
+    //         newData.sort((a, b) => a.dateObj - b.dateObj);
+    //         console.log("Data Firestore:", newData);
+    //         setData(newData);
+    //     });
+
+    //     return () => unsub();
+    // }, []);
+
+    useEffect(() => {
+        const q = query(
+            collection(firestore, "ProduksiHarianUltrasonik"),
+            orderBy("waktuTS", "desc"),   // Urutkan dari terbaru
+            limit(12)                   // Ambil hanya 12 data
+        );
+
+        // const unsub = onSnapshot(q, (snapshot) => {
+        //     const newData = snapshot.docs.map((doc) => {
+        //         const d = doc.data();
+        //         const waktu = d.waktu;
+
+        //         // Ubah format "7/11/2025 13.43.06" → Date object
+        //         let dateObj = null;
+        //         if (waktu) {
+        //             try {
+        //                 const [tgl, jam] = waktu.split(" ");
+        //                 const [day, month, year] = tgl.split("/");
+        //                 const [hour, minute, second] = jam.split(".");
+        //                 const isoString = `${year}-${month.padStart(
+        //                     2, "0"
+        //                 )}-${day.padStart(2, "0")}T${hour}:${minute}:${second}`;
+        //                 dateObj = new Date(isoString);
+        //             } catch (error) {
+        //                 console.warn("Format waktu tidak dikenali:", waktu);
+        //             }
+        //         }
+
+        //         return {
+        //             id: doc.id,
+        //             ...d,
+        //             dateObj,
+        //         };
+        //     });
+
+        //     // Karena query desc → urutkan lagi ke ASC untuk grafik
+        //     newData.sort((a, b) => a.dateObj - b.dateObj);
+
+        //     setData(newData);
+        // });
+
+        const unsub = onSnapshot(q, (snapshot) => {
             const newData = snapshot.docs.map((doc) => {
                 const d = doc.data();
-                const waktu = d.waktu;
 
-                // Ubah format "7/11/2025 13.43.06" → Date object
                 let dateObj = null;
-                if (waktu) {
-                    try {
-                        const [tgl, jam] = waktu.split(" ");
-                        const [day, month, year] = tgl.split("/");
-                        const [hour, minute, second] = jam.split(".");
-                        const isoString = `${year}-${month.padStart(
-                            2,
-                            "0"
-                        )}-${day.padStart(2, "0")}T${hour}:${minute}:${second}`;
-                        dateObj = new Date(isoString);
-                    } catch (error) {
-                        console.warn("Format waktu tidak dikenali:", waktu);
-                    }
+                if (d.waktuTS && d.waktuTS.toDate) {
+                    dateObj = d.waktuTS.toDate();
                 }
 
                 return {
@@ -47,14 +114,15 @@ export default function Example() {
                 };
             });
 
-            // Urutkan data berdasarkan waktu
+            // Karena query desc → urutkan ke ASC
             newData.sort((a, b) => a.dateObj - b.dateObj);
-            console.log("Data Firestore:", newData);
+
             setData(newData);
         });
 
         return () => unsub();
     }, []);
+
 
     if (!data.length)
         return <div className="text-center text-gray-500">Memuat data dari Firestore...</div>;
@@ -103,7 +171,7 @@ export default function Example() {
 
         // Ubah ke liter + bulatkan 1 angka di belakang koma
         const volumeLiter = volume / 1000;
-        const volumeFinal = Number(volumeLiter.toFixed(1));
+        const volumeFinal = Math.floor(volume / 1000);
 
         return {
             ...d,
@@ -189,7 +257,7 @@ export default function Example() {
                     });
                 }}
                 allowDuplicatedCategory={false}
-                tick={{ fontSize: 11, fontWeight: "bold" }}
+                tick={{ fontSize: 8, fontWeight: "bold" }}
                 ticks={dataWithIndex.map((_, i) => i)}
                 interval={0}
                 height={30}
@@ -197,7 +265,7 @@ export default function Example() {
 
             <YAxis
                 width={60}
-                domain={[3, 6]}
+                domain={[5, 8]}
                 tick={{ fontSize: 12 }}
                 label={{
                     value: "Produksi Gas (L)", // ✅ label kiri
@@ -206,6 +274,7 @@ export default function Example() {
                     dy: 30,
                     dx: -20,
                 }}
+                interval={0}
             />
 
 

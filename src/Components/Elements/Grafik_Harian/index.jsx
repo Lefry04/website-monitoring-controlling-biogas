@@ -78,55 +78,127 @@ export default function ChartProduksiHarian({ title }) {
     // }, []);
 
 
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             const q = query(
+    //                 collection(firestore, "ProduksiHarianUltrasonik"),
+    //                 orderBy("index", "desc"),
+    //                 limit(4)
+    //             );
+
+    //             const snap = await getDocs(q);
+
+    //             const fetched = snap.docs.map((doc) => {
+    //                 const d = doc.data();
+
+    //                 // --- FORMAT TANGGAL ---
+    //                 let tanggal = d.waktu;
+    //                 if (typeof tanggal === "string") {
+    //                     const parts = tanggal.split(" ")[0].split("/");
+    //                     tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
+    //                 }
+
+    //                 // --- HITUNG VOLUME ---
+    //                 const jarak = Number(d.jarak);
+
+    //                 // radius = 12 + ((11.5 - 12) / 16.5) * jarak
+    //                 const radius =
+    //                     12 + ((11.5 - 12) / 16.5) * jarak;
+
+    //                 // Volume kerucut terpancung (cm³)
+    //                 // V = 1/3 * π * t * (R² + Rr + r²)
+    //                 const volume =
+    //                     (1 / 3) *
+    //                     Math.PI *
+    //                     jarak *
+    //                     (12 ** 2 + 12 * radius + radius ** 2);
+
+    //                 // cm³ → liter + bulatkan 1 desimal
+    //                 const volumeLiter = Number((volume / 1000).toFixed(1));
+
+    //                 return {
+    //                     tanggal,
+    //                     produksi: volumeLiter, // ← PAKAI VOLUME
+    //                     jarak: d.jarak,
+    //                     index: d.index,
+    //                 };
+    //             });
+
+    //             // Balik urutan → lama ke baru
+    //             setData(fetched.sort((a, b) => a.index - b.index));
+
+    //         } catch (err) {
+    //             console.log("Error fetching data:", err);
+    //         }
+    //     };
+
+    //     fetchData();
+    // }, []);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // 1) Ambil semua data (atau bisa dibatasi jika terlalu banyak)
                 const q = query(
                     collection(firestore, "ProduksiHarianUltrasonik"),
-                    orderBy("index", "desc"),
-                    limit(4)
+                    orderBy("index", "desc")
                 );
 
                 const snap = await getDocs(q);
 
-                const fetched = snap.docs.map((doc) => {
+                // 2) Kelompokkan berdasarkan tanggal (dd/mm)
+                const grouped = {};
+
+                snap.docs.forEach(doc => {
                     const d = doc.data();
 
-                    // --- FORMAT TANGGAL ---
+                    // format tanggal dd/mm
                     let tanggal = d.waktu;
                     if (typeof tanggal === "string") {
                         const parts = tanggal.split(" ")[0].split("/");
                         tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
                     }
 
-                    // --- HITUNG VOLUME ---
+                    // Hitung volume
                     const jarak = Number(d.jarak);
 
-                    // radius = 12 + ((11.5 - 12) / 16.5) * jarak
-                    const radius =
-                        12 + ((11.5 - 12) / 16.5) * jarak;
+                    const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
 
-                    // Volume kerucut terpancung (cm³)
-                    // V = 1/3 * π * t * (R² + Rr + r²)
                     const volume =
                         (1 / 3) *
                         Math.PI *
                         jarak *
                         (12 ** 2 + 12 * radius + radius ** 2);
 
-                    // cm³ → liter + bulatkan 1 desimal
                     const volumeLiter = Number((volume / 1000).toFixed(1));
 
+                    // masukkan ke grup
+                    if (!grouped[tanggal]) grouped[tanggal] = [];
+                    grouped[tanggal].push(volumeLiter);
+                });
+
+                // 3) Hitung rata-rata per tanggal
+                const averaged = Object.keys(grouped).map(tanggal => {
+                    const arr = grouped[tanggal];
+                    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
                     return {
                         tanggal,
-                        produksi: volumeLiter, // ← PAKAI VOLUME
-                        jarak: d.jarak,
-                        index: d.index,
+                        produksi: Number(avg.toFixed(1))
                     };
                 });
 
-                // Balik urutan → lama ke baru
-                setData(fetched.sort((a, b) => a.index - b.index));
+                // 4) Urutkan berdasarkan tanggal terbaru → lama
+                const sorted = averaged.sort((a, b) => {
+                    const [da, ma] = a.tanggal.split("/");
+                    const [db, mb] = b.tanggal.split("/");
+                    return new Date(2025, ma - 1, da) - new Date(2025, mb - 1, db);
+                });
+
+                // 5) Ambil 4 tanggal terakhir
+                const lastFour = sorted.slice(-4);
+
+                setData(lastFour);
 
             } catch (err) {
                 console.log("Error fetching data:", err);
@@ -135,6 +207,9 @@ export default function ChartProduksiHarian({ title }) {
 
         fetchData();
     }, []);
+
+    const lastValue = data.length > 0 ? data[data.length - 1].produksi : 0;
+
 
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
@@ -180,7 +255,7 @@ export default function ChartProduksiHarian({ title }) {
                         tickLine={false}
                     />
                     <Tooltip
-                        content={<CustomTooltip/>}
+                        content={<CustomTooltip />}
                     />
 
                     {/* Garis vertikal */}
@@ -193,7 +268,7 @@ export default function ChartProduksiHarian({ title }) {
 
             {/* Keterangan di bawah grafik */}
             <p className="text-xs text-gray-600 text-center">
-                Rata-rata produksi gas: 200 / hari
+                Rata-rata produksi gas: {lastValue} L / hari
             </p>
         </div>
     );

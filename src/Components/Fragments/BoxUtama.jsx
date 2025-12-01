@@ -1,8 +1,9 @@
 import profil from "../../assets/profil.svg"
 import icon1 from "../../assets/icon1.svg"
-import { useLocation } from "react-router-dom";
+import { data, useLocation } from "react-router-dom";
 import BoxGrafik from "./BoxGrafik";
 import { Box } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const BoxUtama = (props) => {
 
@@ -15,6 +16,43 @@ const BoxUtama = (props) => {
         { name: "Produksi", path: "/produksi" },
         { name: "Pengaduk", path: "/pengaduk" },
     ];
+
+    const [dateInfo, setDateInfo] = useState({
+        hari: "",
+        tanggal: "",
+        jam: ""
+    });
+
+    useEffect(() => {
+        const updateTime = () => {
+            const now = new Date();
+
+            const hariIndo = now.toLocaleDateString("id-ID", { weekday: "long" });
+            const tanggalIndo = now.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+
+            const jam = now.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+            setDateInfo({
+                hari: hariIndo,
+                tanggal: tanggalIndo,
+                jam
+            });
+        };
+
+        updateTime();
+
+        // update setiap 1 menit
+        const interval = setInterval(updateTime, 60000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="left-1/10 my-15 w-screen absolute flex flex-row gap-8 items-scretch">
@@ -52,8 +90,8 @@ const BoxUtama = (props) => {
                <BoxGrafik/>
                 <img src={icon1} alt="" className="w-20 self-end drag-none" />
                 <div className="text-xl self-end text-right">
-                    <p>Senin, 15 September 2025
-                        <br />19.00
+                    <p>{dateInfo.hari}, {dateInfo.tanggal}
+                        <br />{dateInfo.jam}
                     </p>
                     <p className="font-thin mt-17 hidden xl:block">Dashboard IoT Biogas ini menghadirkan kontrol dan insight cerdas untuk mengoptimalkan energi terbarukan Anda dengan mudah dan efisien.</p>
                 </div>
