@@ -26,10 +26,10 @@ const RealTime = () => {
     
     // sensor tekanan
     let tekananStatus, tekananColor = "text-red-500", tekananKeadaan;
-    if (sensor?.tekanan?.delta_kPa < 3.3) {
+    if (sensor?.pressure_IDE?.biogas_pressure_kpa < 3.3) {
         tekananStatus = "Tekanan Rendah";
         tekananKeadaan = "Sedikit Gas";
-    } else if (sensor?.tekanan?.delta_kPa >= 3.3 && sensor?.tekanan?.delta_kPa < 6.6) {
+    } else if (sensor?.pressure_IDE?.biogas_pressure_kpa >= 3.3 && sensor?.pressure_IDE?.biogas_pressure_kpa < 6.6) {
         tekananStatus = "Tekanan Normal";
         tekananColor = "text-green-500";
         tekananKeadaan = "Ada Gas";
@@ -40,12 +40,13 @@ const RealTime = () => {
 
     // sensor pH
     let pHStatus, pHColor, colpH = "bg-red-500", phKeadaan = "Tidak Optimal";
-    if (sensor?.ph_sensor?.value > 6.5 && sensor?.ph_sensor?.value <= 8.5) {
+    let ph = sensor?.ph_sensor_IDE?.value?.toFixed(1) ?? '-';
+    if (sensor?.ph_sensor_IDE?.value > 6.5 && sensor?.ph_sensor_IDE?.value <= 8.5) {
         pHStatus = "Netral";
         pHColor = "text-green-500";
         colpH = "bg-green-500";
         phKeadaan = "Optimal";
-    } else if (sensor?.ph_sensor?.value <= 6.5) {
+    } else if (sensor?.ph_sensor_IDE?.value <= 6.5) {
         pHStatus = "Asam";
         pHColor = "text-red-500";
     } else {
@@ -71,7 +72,7 @@ const RealTime = () => {
 
     // sensor gas metana
     let terdeteksi, metanaStatus, metanaColor, metanaKeadaan;
-    if (sensor?.metana?.status === "No") {
+    if (sensor?.methane_IDE?.status === 0) {
         terdeteksi = false;
         metanaStatus = "Tidak Terdeteksi";
         metanaColor = "text-green-500";
@@ -91,39 +92,36 @@ const RealTime = () => {
 
                 <Monitoring sensor="Tekanan Gas">
                     <Monitoring.Bar>
-                        <HorizontalBar value={sensor?.tekanan?.delta_kPa} max={10} satuan="kPa" col1="bg-red-500" col2="bg-green-400" col3="bg-red-500" />
+                        <HorizontalBar value={sensor?.pressure_IDE?.biogas_pressure_kpa} max={10} satuan="kPa" col1="bg-red-500" col2="bg-green-400" col3="bg-red-500" />
                     </Monitoring.Bar>
-                    <Monitoring.Desc labelcol={tekananColor} label={tekananStatus} labelnilai="Tekanan" nilai={sensor?.tekanan?.delta_kPa} satuan="kPa" kapasitas={10} keadaan={tekananKeadaan
-
-                    } />
+                    <Monitoring.Desc labelcol={tekananColor} label={tekananStatus} labelnilai="Tekanan" nilai={sensor?.pressure_IDE?.biogas_pressure_kpa} satuan="kPa" kapasitas={10} keadaan={tekananKeadaan} />
                 </Monitoring>
 
                 <Monitoring sensor="Tingkat Keasaman (pH)">
                     <Monitoring.Bar>
-                        <HorizontalBar value={11} max={14} col1={colpH} col2={colpH} col3={colpH} />
+                        <HorizontalBar value={sensor?.ph_sensor_IDE?.value} max={14} col1={colpH} col2={colpH} col3={colpH} />
                     </Monitoring.Bar>
-                    <Monitoring.Desc labelcol={pHColor} label={pHStatus} labelnilai="Nilai pH" nilai={sensor?.ph_sensor?.value} keadaan="Tidak Optimal" />
+                    <Monitoring.Desc labelcol={pHColor} label={pHStatus} labelnilai="Nilai pH" nilai={ph} keadaan="Tidak Optimal" />
                 </Monitoring>
 
                 <Monitoring sensor="Cairan Subtrat">
                     <Monitoring.Bar>
-                        <HorizontalBarCairGas value={sensor?.ultrasonik?.jarak} max={19} satuan="%" />
+                        <HorizontalBarCairGas value={36.5 - sensor?.ultrasonic_IDE?.distance_cm} max={19} satuan="%" />
                     </Monitoring.Bar>
                     <Monitoring.Desc labelcol="" label="Level Cairan Rendah" labelnilai="Status Cairan" nilai="Rendah" keadaan="Perlu diisi" />
                 </Monitoring>
 
                 <Monitoring sensor="Suhu dan Kelembapan">
                     <Monitoring.Bar>
-                        <StatusSuhu temp={sensor?.suhu?.temp} hum={sensor?.suhu?.hum} />
+                        <StatusSuhu temp_ex={sensor?.temp_external_IDE?.temperature_c} top={sensor?.temp_internal_IDE?.up_c} bot={sensor?.temp_internal_IDE?.down_c} />
                     </Monitoring.Bar>
                     <Monitoring.Desc labelcol={suhuColor} label={suhuStatus} />
                 </Monitoring>
 
                 <Monitoring sensor="Gas Metana">
                     <Monitoring.Bar>
-                        <HorizontalBarGas terdeteksi={terdeteksi} />
+                        <HorizontalBarGas terdeteksi={terdeteksi} ch4={sensor?.methane_IDE?.percent_adjusted} />
                     </Monitoring.Bar>
-                    <Monitoring.Desc labelcol={metanaColor} label={metanaStatus} labelnilai="Status" nilai="Aman" keadaan={metanaKeadaan} />
                 </Monitoring>
 
                 <Monitoring sensor="Aliran Gas">

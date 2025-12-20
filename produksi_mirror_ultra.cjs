@@ -79,7 +79,7 @@ const dbFirestore = admin.firestore();
   console.log("⏰ Menyalin data dari Realtime Database ke Firestore...");
 
   try {
-    const snapshot = await dbRealtime.ref("/ultrasonik/jarak").once("value");
+    const snapshot = await dbRealtime.ref("/ultrasonic_IDE/distance_cm").once("value");
     const jarakAsli = snapshot.val();
 
     if (jarakAsli !== null && jarakAsli !== undefined) {

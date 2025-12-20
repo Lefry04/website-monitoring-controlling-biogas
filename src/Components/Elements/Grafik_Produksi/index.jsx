@@ -4,130 +4,92 @@ import {
     XAxis,
     YAxis,
     Tooltip,
-    Legend,
     ReferenceArea,
     ResponsiveContainer,
 } from "recharts";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { firestore } from "../../../services/firebase";
-// import { collection, onSnapshot } from "firebase/firestore";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 
-export default function Example() {
-
+export default function Grafik({ full = false }) {
     const [data, setData] = useState([]);
 
-    // useEffect(() => {
-    //     const unsub = onSnapshot(collection(firestore, "ProduksiHarianUltrasonik"), (snapshot) => {
-
-    //         const newData = snapshot.docs.map((doc) => {
-    //             const d = doc.data();
-    //             const waktu = d.waktu;
-
-    //             // Ubah format "7/11/2025 13.43.06" → Date object
-    //             let dateObj = null;
-    //             if (waktu) {
-    //                 try {
-    //                     const [tgl, jam] = waktu.split(" ");
-    //                     const [day, month, year] = tgl.split("/");
-    //                     const [hour, minute, second] = jam.split(".");
-    //                     const isoString = `${year}-${month.padStart(
-    //                         2,
-    //                         "0"
-    //                     )}-${day.padStart(2, "0")}T${hour}:${minute}:${second}`;
-    //                     dateObj = new Date(isoString);
-    //                 } catch (error) {
-    //                     console.warn("Format waktu tidak dikenali:", waktu);
-    //                 }
-    //             }
-
-    //             return {
-    //                 id: doc.id,
-    //                 ...d,
-    //                 dateObj,
-    //             };
-    //         });
-
-    //         // Urutkan data berdasarkan waktu
-    //         newData.sort((a, b) => a.dateObj - b.dateObj);
-    //         console.log("Data Firestore:", newData);
-    //         setData(newData);
-    //     });
-
-    //     return () => unsub();
-    // }, []);
-
+    // ======================
+    // 🔥 FETCH DATA
+    // ======================
     useEffect(() => {
-        const q = query(
-            collection(firestore, "ProduksiHarianUltrasonik"),
-            orderBy("waktuTS", "desc"),   // Urutkan dari terbaru
-            limit(12)                   // Ambil hanya 12 data
-        );
-
-        // const unsub = onSnapshot(q, (snapshot) => {
-        //     const newData = snapshot.docs.map((doc) => {
-        //         const d = doc.data();
-        //         const waktu = d.waktu;
-
-        //         // Ubah format "7/11/2025 13.43.06" → Date object
-        //         let dateObj = null;
-        //         if (waktu) {
-        //             try {
-        //                 const [tgl, jam] = waktu.split(" ");
-        //                 const [day, month, year] = tgl.split("/");
-        //                 const [hour, minute, second] = jam.split(".");
-        //                 const isoString = `${year}-${month.padStart(
-        //                     2, "0"
-        //                 )}-${day.padStart(2, "0")}T${hour}:${minute}:${second}`;
-        //                 dateObj = new Date(isoString);
-        //             } catch (error) {
-        //                 console.warn("Format waktu tidak dikenali:", waktu);
-        //             }
-        //         }
-
-        //         return {
-        //             id: doc.id,
-        //             ...d,
-        //             dateObj,
-        //         };
-        //     });
-
-        //     // Karena query desc → urutkan lagi ke ASC untuk grafik
-        //     newData.sort((a, b) => a.dateObj - b.dateObj);
-
-        //     setData(newData);
-        // });
+        const q = full
+            ? query(
+                collection(firestore, "ProduksiHarianUltrasonik"),
+                orderBy("waktuTS", "asc")
+            )
+            : query(
+                collection(firestore, "ProduksiHarianUltrasonik"),
+                orderBy("waktuTS", "desc"),
+                limit(12)
+            );
 
         const unsub = onSnapshot(q, (snapshot) => {
-            const newData = snapshot.docs.map((doc) => {
-                const d = doc.data();
-
-                let dateObj = null;
-                if (d.waktuTS && d.waktuTS.toDate) {
-                    dateObj = d.waktuTS.toDate();
-                }
-
-                return {
-                    id: doc.id,
-                    ...d,
-                    dateObj,
-                };
-            });
-
-            // Karena query desc → urutkan ke ASC
-            newData.sort((a, b) => a.dateObj - b.dateObj);
+            const newData = snapshot.docs
+                .map((doc) => {
+                    const d = doc.data();
+                    return {
+                        id: doc.id,
+                        ...d,
+                        dateObj: d.waktuTS?.toDate(),
+                    };
+                })
+                .sort((a, b) => a.dateObj - b.dateObj);
 
             setData(newData);
         });
 
         return () => unsub();
-    }, []);
+    }, [full]);
+
+    const scrollRef = useRef(null);
+
+    useEffect(() => {
+        if (full && scrollRef.current && data.length) {
+            // tunggu render selesai
+            setTimeout(() => {
+                scrollRef.current.scrollLeft =
+                    scrollRef.current.scrollWidth;
+            }, 100);
+        }
+    }, [full, data]);
 
 
-    if (!data.length)
-        return <div className="text-center text-gray-500">Memuat data dari Firestore...</div>;
 
-    const total = data.length;
+    if (!data.length) {
+        return (
+            <div className="text-center text-gray-400">
+                Memuat data grafik...
+            </div>
+        );
+    }
+
+    // ======================
+    // 🔢 OLAH DATA (SAMA DGN SEBELUMNYA)
+    // ======================
+    const dataWithIndex = data.map((d, i) => {
+        const jarak = Number(d.jarak);
+        const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
+        const volume =
+            (1 / 3) * Math.PI * jarak * (12 ** 2 + 12 * radius + radius ** 2);
+
+        return {
+            ...d,
+            idx: i,
+            volume: Math.round(volume / 1000),
+        };
+    });
+
+    const total = dataWithIndex.length;
+
+    // ======================
+    // 🎨 REFERENCE AREA (SAMA)
+    // ======================
     const numSections = 3;
     const sectionSize = Math.ceil(total / numSections);
     const colors = [
@@ -135,168 +97,134 @@ export default function Example() {
         "rgba(255, 0, 0, 0.2)",
         "rgba(255, 182, 36, 0.2)",
     ];
+
     const sections = Array.from({ length: numSections }, (_, i) => ({
         x1: i * sectionSize,
         x2: Math.min((i + 1) * sectionSize, total - 1),
-        color: colors[i % 3],
+        color: colors[i % colors.length],
     }));
 
-    // const dataWithIndex = data.map((d, i) => ({ ...d, idx: i }));
-
-    // const dataWithIndex = data.map((d, i) => {
-    //     const jarak = Number(d.jarak);
-
-    //     // Hitung jari-jari
-    //     const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
-
-    //     // Hitung volume (m³)
-    //     const volume = (1 / 3) * Math.PI * jarak * (12 ** 2 + 12 * radius + radius ** 2);
-
-    //     return {
-    //         ...d,
-    //         idx: i,
-    //         radius,
-    //         volume,  // ← ini yang dipakai grafik
-    //     };
-    // });
-
-    const dataWithIndex = data.map((d, i) => {
-        const jarak = Number(d.jarak);
-
-        // Hitung jari-jari
-        const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
-
-        // Hitung volume (cm³)
-        const volume = (1 / 3) * Math.PI * jarak * (12 ** 2 + 12 * radius + radius ** 2);
-
-        // Ubah ke liter + bulatkan 1 angka di belakang koma
-        const volumeLiter = volume / 1000;
-        const volumeFinal = Math.floor(volume / 1000);
-
-        return {
-            ...d,
-            idx: i,
-            radius,
-            volume: volumeFinal,   // ← ini yang dipakai grafik
-        };
-    });
-
+    // ======================
+    // 🎯 TOOLTIP (SAMA)
+    // ======================
     const CustomTooltip = ({ active, payload }) => {
-        if (!active || !payload || !payload.length) return null;
-
+        if (!active || !payload?.length) return null;
         const item = payload[0].payload;
 
         return (
-            <div
-                style={{
-                    background: "white",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    border: "1px solid #ddd",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                }}
-            >
-                <div style={{ marginTop: "6px" }}>
-                    <b>Volume:</b> {item.volume} liter
-                </div>
+            <div className="bg-white p-2 rounded-lg shadow text-sm">
+                <b>Volume:</b> {item.volume} liter
             </div>
         );
     };
 
-    return (
-        <LineChart
-            data={dataWithIndex}
-            margin={{
-                top: 5,
-                right: 40,
-                left: 10,
-                bottom: 5,
-            }}
-            style={{ width: '100%', height: '100%', aspectRatio: 1.618 }}
-        >
-            <XAxis
-                xAxisId="hour"
-                dataKey="idx"
-                type="number"
-                domain={[0, total - 1]}
-                tickFormatter={(i) => {
-                    const t = dataWithIndex[Math.floor(i)]?.dateObj;
-                    if (!t) return "";
-                    return t.toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
-                }}
-                interval={0}
-                ticks={dataWithIndex.map((_, i) => i)}
-                height={40}
-                tick={{ fontSize: 10 }}
-                label={{
-                    value: "Waktu Pengukuran",
-                    position: "outsideBottom",
-                    dy: 15,
-                }}
-                axisLine={false}
-                tickLine={false}
-            />
+    // ======================
+    // 📊 ISI CHART (DIPAKAI 2 MODE)
+    // ======================
+    const Chart = (
+        <div style={{ width: "100%", height: "100%" }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                    data={dataWithIndex}
+                    margin={{ top: 10, right: 40, left: 10, bottom: 20 }}
+                >
+                    {/* X AXIS JAM */}
+                    <XAxis
+                        xAxisId="hour"
+                        dataKey="idx"
+                        type="number"
+                        domain={[0, total - 1]}
+                        tickFormatter={(i) =>
+                            dataWithIndex[i]?.dateObj?.toLocaleTimeString("id-ID", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })
+                        }
+                        ticks={dataWithIndex.map((_, i) => i)}
+                        interval={0}
+                        height={40}
+                        tick={{ fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                        label={{
+                            value: "Waktu Pengukuran",
+                            position: "outsideBottom",
+                            dy: 15,
+                        }}
+                    />
 
-            {/* ✅ Sumbu X atas → tanggal */}
-            <XAxis
-                xAxisId="date"
-                dataKey="idx"
-                type="number"
-                orientation="bottom"
-                domain={[0, total - 1]}
-                tickFormatter={(i) => {
-                    const t = dataWithIndex[Math.floor(i)]?.dateObj;
-                    if (!t) return "";
-                    return t.toLocaleDateString("id-ID", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                    });
-                }}
-                allowDuplicatedCategory={false}
-                tick={{ fontSize: 8, fontWeight: "bold" }}
-                ticks={dataWithIndex.map((_, i) => i)}
-                interval={0}
-                height={30}
-            />
+                    {/* X AXIS TANGGAL */}
+                    <XAxis
+                        xAxisId="date"
+                        dataKey="idx"
+                        type="number"
+                        orientation="bottom"
+                        domain={[0, total - 1]}
+                        tickFormatter={(i) =>
+                            dataWithIndex[i]?.dateObj?.toLocaleDateString("id-ID", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                            })
+                        }
+                        ticks={dataWithIndex.map((_, i) => i)}
+                        interval={0}
+                        height={30}
+                        tick={{ fontSize: 8, fontWeight: "bold" }}
+                    />
 
-            <YAxis
-                width={60}
-                domain={[5, 8]}
-                tick={{ fontSize: 12 }}
-                label={{
-                    value: "Produksi Gas (L)", // ✅ label kiri
-                    angle: -90,
-                    position: "outsideLeft",
-                    dy: 30,
-                    dx: -20,
-                }}
-                interval={0}
-            />
+                    <YAxis
+                        width={60}
+                        label={{
+                            value: "Produksi Gas (L)",
+                            angle: -90,
+                            position: "outsideLeft",
+                            dy: 30,
+                            dx: -20,
+                        }}
+                    />
 
+                    <Tooltip content={<CustomTooltip />} />
 
-            {/* <Tooltip labelFormatter={(i) => dataWithIndex[Math.floor(i)]?.time || ""} /> */}
-            <Tooltip
-                content={<CustomTooltip />}
-            />
+                    {sections.map((s, i) => (
+                        <ReferenceArea
+                            key={i}
+                            x1={s.x1}
+                            x2={s.x2}
+                            fill={s.color}
+                            fillOpacity={0.3}
+                        />
+                    ))}
 
-            {/* <Legend /> */}
+                    <Line
+                        type="monotone"
+                        dataKey="volume"
+                        stroke="#000"
+                        strokeWidth={2}
+                        activeDot={{ r: 6 }}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
 
-            {sections.map((s, i) => (
-                <ReferenceArea
-                    key={i}
-                    x1={s.x1}
-                    x2={s.x2}
-                    fill={s.color}
-                    fillOpacity={0.3}
-                />
-            ))}
-
-            <Line type="monotone" dataKey="volume" stroke="#000000" activeDot={{ r: 6 }} />
-        </LineChart>
+    // ======================
+    // 🔑 RETURN FINAL
+    // ======================
+    return full ? (
+        // 🔓 MODE MODAL (SCROLL)
+        <div ref={scrollRef} className="w-full overflow-x-auto">
+            <div
+                className="h-[60vh]"
+                style={{ minWidth: `${dataWithIndex.length * 70}px` }}
+            >
+                {Chart}
+            </div>
+        </div>
+    ) : (
+        // 🔒 MODE NORMAL (TANPA SCROLL)
+        <div className="w-full h-[300px]">
+            {Chart}
+        </div>
     );
 }
-

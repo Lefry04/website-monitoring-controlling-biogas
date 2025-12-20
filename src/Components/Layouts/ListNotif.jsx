@@ -47,15 +47,6 @@ const Notif = () => {
                     ))}
                 </div>
 
-                <button
-                    onClick={async () => {
-                        await migrateWaktuToTimestamp();
-                        alert("Migrasi selesai!");
-                    }}
-                >
-                    Migrasi Timestamp
-                </button>
-
                 {/* pagination */}
                 <div className="flex justify-end items-center gap-3 mt-5 text-gray-500 text-sm">
                     <button className="p-2 hover:text-black">&lt;</button>

@@ -150,53 +150,92 @@ export default function ChartProduksiHarian({ title }) {
                 // 2) Kelompokkan berdasarkan tanggal (dd/mm)
                 const grouped = {};
 
+                // snap.docs.forEach(doc => {
+                //     const d = doc.data();
+
+                //     // format tanggal dd/mm
+                //     let tanggal = d.waktu;
+                //     if (typeof tanggal === "string") {
+                //         const parts = tanggal.split(" ")[0].split("/");
+                //         tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
+                //     }
+
+                //     // Hitung volume
+                //     const jarak = Number(d.jarak);
+
+                //     const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
+
+                //     const volume =
+                //         (1 / 3) *
+                //         Math.PI *
+                //         jarak *
+                //         (12 ** 2 + 12 * radius + radius ** 2);
+
+                //     const volumeLiter = Number((volume / 1000).toFixed(1));
+
+                //     // masukkan ke grup
+                //     if (!grouped[tanggal]) grouped[tanggal] = [];
+                //     grouped[tanggal].push(volumeLiter);
+                // });
+
                 snap.docs.forEach(doc => {
                     const d = doc.data();
+                    const tanggalTS = d.waktuTS ? d.waktuTS.toDate() : new Date();
 
-                    // format tanggal dd/mm
-                    let tanggal = d.waktu;
-                    if (typeof tanggal === "string") {
-                        const parts = tanggal.split(" ")[0].split("/");
-                        tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
-                    }
+                    // --- kunci hanya tanggal/bulan ---
+                    const key = `${tanggalTS.getDate()}/${tanggalTS.getMonth() + 1}`;
 
-                    // Hitung volume
                     const jarak = Number(d.jarak);
-
                     const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
-
                     const volume =
-                        (1 / 3) *
-                        Math.PI *
-                        jarak *
-                        (12 ** 2 + 12 * radius + radius ** 2);
-
+                        (1 / 3) * Math.PI * jarak * (12 ** 2 + 12 * radius + radius ** 2);
                     const volumeLiter = Number((volume / 1000).toFixed(1));
 
-                    // masukkan ke grup
-                    if (!grouped[tanggal]) grouped[tanggal] = [];
-                    grouped[tanggal].push(volumeLiter);
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(volumeLiter);
                 });
 
+
                 // 3) Hitung rata-rata per tanggal
-                const averaged = Object.keys(grouped).map(tanggal => {
-                    const arr = grouped[tanggal];
+                // const averaged = Object.keys(grouped).map(tanggal => {
+                //     const arr = grouped[tanggal];
+                //     const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+                //     return {
+                //         tanggal,
+                //         produksi: Number(avg.toFixed(1))
+                //     };
+                // });
+
+                // // 4) Urutkan berdasarkan tanggal terbaru → lama
+                // const sorted = averaged.sort((a, b) => {
+                //     const [da, ma] = a.tanggal.split("/");
+                //     const [db, mb] = b.tanggal.split("/");
+                //     return new Date(2025, ma - 1, da) - new Date(2025, mb - 1, db);
+                // });
+
+                // // 5) Ambil 4 tanggal terakhir
+                // const lastFour = sorted.slice(-4);
+
+                // setData(lastFour);
+
+                const averaged = Object.keys(grouped).map(key => {
+                    const arr = grouped[key];
                     const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+
+                    // Buat Date untuk sorting
+                    const [d, m] = key.split("/").map(Number);
                     return {
-                        tanggal,
+                        waktuTS: new Date(2025, m - 1, d), // tahun bebas untuk sorting
+                        label: key, // simpan string dd/mm untuk XAxis
                         produksi: Number(avg.toFixed(1))
                     };
                 });
 
-                // 4) Urutkan berdasarkan tanggal terbaru → lama
-                const sorted = averaged.sort((a, b) => {
-                    const [da, ma] = a.tanggal.split("/");
-                    const [db, mb] = b.tanggal.split("/");
-                    return new Date(2025, ma - 1, da) - new Date(2025, mb - 1, db);
-                });
+                // Urutkan ascending berdasarkan timestamp
+                averaged.sort((a, b) => a.waktuTS - b.waktuTS);
 
-                // 5) Ambil 4 tanggal terakhir
-                const lastFour = sorted.slice(-4);
+                // Ambil 4 tanggal terakhir
+                const lastFour = averaged.slice(-4);
 
                 setData(lastFour);
 
@@ -211,17 +250,31 @@ export default function ChartProduksiHarian({ title }) {
     const lastValue = data.length > 0 ? data[data.length - 1].produksi : 0;
 
 
+    // const CustomTooltip = ({ active, payload }) => {
+    //     if (active && payload && payload.length) {
+    //         const data = payload[0].payload; // data point yang sedang di-hover
+    //         return (
+    //             <div className="bg-white p-2 rounded shadow border text-sm">
+    //                 <p><strong>Volume:</strong> {data.produksi}</p>
+    //             </div>
+    //         );
+    //     }
+    //     return null;
+    // };
+
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
-            const data = payload[0].payload; // data point yang sedang di-hover
+            const data = payload[0].payload;
+            const date = new Date(data.waktuTS);
             return (
                 <div className="bg-white p-2 rounded shadow border text-sm">
-                    <p><strong>Volume:</strong> {data.produksi}</p>
+                    <p><strong>Volume:</strong> {data.produksi} L</p>
                 </div>
             );
         }
         return null;
     };
+
 
 
     return (
@@ -241,11 +294,15 @@ export default function ChartProduksiHarian({ title }) {
                 >
                     {/* <CartesianGrid vertical={false} stroke="#e5e7eb" /> */}
                     <XAxis
-                        dataKey="tanggal"
+                        dataKey="waktuTS"
                         tick={{ fontSize: 10 }}
                         axisLine={{ stroke: "#000", strokeWidth: 0.5 }}
                         tickLine={false}
                         interval={0}
+                        tickFormatter={(value) => {
+                            const d = new Date(value);
+                            return `${d.getDate()}/${d.getMonth() + 1}`; // tampilkan dd/mm
+                        }}
                     />
                     <YAxis
                         domain={[0, 7]}

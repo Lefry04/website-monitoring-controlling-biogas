@@ -1,46 +1,44 @@
 import pictemp from '../../../assets/sensor_suhu/temp.svg';
 import cloud from '../../../assets/sensor_suhu/cloud.svg';
+import temp_bot from '../../../assets/sensor_suhu/temp_bot.svg';
 import pichum from '../../../assets/sensor_suhu/hum.svg';
 import { useEffect, useState } from 'react';
 import { getSensor } from '../../../services/sensor.service';
 
-const StatusSuhu = (props) => {
+const StatusSuhu = ({ temp_ex, top, bot }) => {
 
-    const { temp, hum } = props;
+    // top = top.toFixed(1);
+    // bot = bot.toFixed(1);
 
-    // const [sensor, setSensor] = useState([]);
-
-    // useEffect(() => {
-    //     getSensor((data) => {
-    //         setSensor(data);
-    //     });
-    // }, []);
+    const topValue = top?.toFixed(1) ?? '-';
+    const botValue = bot?.toFixed(1) ?? '-';
 
     return (
-        <div className="w-full px-4">
-            {/* <h1>Aliran Gas</h1>
-            <div className="w-full flex items-center justify-center overflow-hidden">
-                <img src={pic} alt="" className="items-center" />
+        <div className="w-full px-4 h-full font-light flex text-base justify-between items-center mb-4">
+            <div className='flex flex-col gap-3 items-center'>
+                <h1>External</h1>
+                <div className='flex items-center gap-1'>
+                    <p>{temp_ex}&deg;C</p>
+                    <img src={cloud} className='h-8' />
+                </div>
             </div>
-            <h1 className="text-red-500 text-center">Aliran Gas Lemah</h1> */}
-            {/* <h1>Suhu dan Kelembapan</h1>
-            <div className="flex flex-1 font-light text-xs justify-center items-center gap-2">
-                <img src={temp} className='h-full' />
-                <h1 className='font-light text-2xl'>{sensor.temp}&deg;C</h1>
-                <img src={cloud} className='h-full' />
-                <div className="min-h-[1em] w-px self-stretch bg-gradient-to-tr from-transparent via-neutral-500 to-transparent opacity-25 dark:via-neutral-400"></div>
-                <img src={hum} className='h-full' />
-                <h1 className='font-light text-2xl'>{sensor.hum} %</h1>
-            </div> */}
-             <div className="flex flex-1 font-light text-xl justify-center items-center gap-2 mt-7 mb-3">
-                <img src={pictemp} className='h-full' />
-                <h1 className='font-light'>{temp}&deg;C</h1>
-                <img src={cloud} className='h-full' />
-                <div className="min-h-[1em] w-px self-stretch bg-gradient-to-tr from-transparent via-neutral-500 to-transparent opacity-25 dark:via-neutral-400"></div>
-                <img src={pichum} className='h-full' />
-                <h1 className='font-light'>{hum} %</h1>
+            <div
+                className="h-8 min-h-[6em] w-px self-stretch bg-gradient-to-tr from-transparent via-neutral-500 to-transparent opacity-25 dark:via-neutral-400"></div>
+            <div className='flex flex-col gap-3 items-center'>
+                <h1>Top</h1>
+                <div className='flex items-center gap-1'>
+                    <p>{topValue}&deg;C</p>
+                    <img src={pictemp} alt="" className='h-8' />
+                </div>
             </div>
-            {/* <h1 className="text-blue-300 text-center">Normal</h1> */}
+            <div className='flex flex-col gap-3 items-center'>
+                <h1>Bottom</h1>
+                <div className='flex items-center gap-1'>
+                    <p>{botValue}&deg;C</p>
+                    <img src={temp_bot} alt="" className='h-8' />
+                </div>
+            </div>
+
         </div>
     )
 }

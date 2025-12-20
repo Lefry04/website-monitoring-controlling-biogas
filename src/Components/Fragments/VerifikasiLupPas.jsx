@@ -20,9 +20,9 @@ const Verifikasi = () => {
     }
 
     return (
-        <div className="bg-black/50 w-2/5 h-fit rounded-2xl p-15 text-start flex flex-col gap-8">
-            <h1 className="font-medium text-[28px]">Tautan reset kata sandi telah dikirim ke email, silahkan periksa email anda</h1>
-            <p className="w-full text-center text-white font-light">Belum menerima kode? <span className="underline cursor-pointer font-bold">Kirim Ulang</span></p>
+        <div className="bg-black/50 lg:w-2/5 w-9/10 h-fit rounded-2xl p-15 text-start flex flex-col gap-8">
+            <h1 className="font-medium text-[28px] text-center">Tautan reset kata sandi telah dikirim ke email, silahkan periksa email anda</h1>
+            <p className="w-full text-center text-white font-light">Belum menerima kode? <span className="underline cursor-pointer font-bold"><br />Kirim Ulang</span></p>
             <Button classname="w-full col-login-button py-4 rounded-2xl mb-5" type="submit" onClick={handleLogin}>Konfirmasi</Button>
         </div>
     )
