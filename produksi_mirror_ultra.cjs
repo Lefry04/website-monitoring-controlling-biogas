@@ -83,7 +83,7 @@ const dbFirestore = admin.firestore();
     const jarakAsli = snapshot.val();
 
     if (jarakAsli !== null && jarakAsli !== undefined) {
-      const jarak = 19 - jarakAsli;
+      const jarak = 36.5 - jarakAsli;
 
       const collRef = dbFirestore.collection("ProduksiHarianUltrasonik");
 
