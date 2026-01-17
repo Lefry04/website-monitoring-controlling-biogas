@@ -8,71 +8,16 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { useEffect, useState, useRef } from "react";
-import { firestore } from "../../../services/firebase";
-import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+// import { firestore } from "../../../services/firebase";
+// import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 
-export default function Grafik({ full = false }) {
-    const [data, setData] = useState([]);
+export default function Grafik({ full = false, data = [], focusdate }) {
 
-    // ======================
-    // 🔥 FETCH DATA
-    // ======================
-    useEffect(() => {
-        const q = full
-            ? query(
-                collection(firestore, "ProduksiHarianUltrasonik"),
-                orderBy("waktuTS", "asc")
-            )
-            : query(
-                collection(firestore, "ProduksiHarianUltrasonik"),
-                orderBy("waktuTS", "desc"),
-                limit(12)
-            );
+        const scrollRef = useRef(null);
 
-        const unsub = onSnapshot(q, (snapshot) => {
-            const newData = snapshot.docs
-                .map((doc) => {
-                    const d = doc.data();
-                    return {
-                        id: doc.id,
-                        ...d,
-                        dateObj: d.waktuTS?.toDate(),
-                    };
-                })
-                .sort((a, b) => a.dateObj - b.dateObj);
+            const ITEM_WIDTH = 70;
 
-            setData(newData);
-        });
-
-        return () => unsub();
-    }, [full]);
-
-    const scrollRef = useRef(null);
-
-    useEffect(() => {
-        if (full && scrollRef.current && data.length) {
-            // tunggu render selesai
-            setTimeout(() => {
-                scrollRef.current.scrollLeft =
-                    scrollRef.current.scrollWidth;
-            }, 100);
-        }
-    }, [full, data]);
-
-
-
-    if (!data.length) {
-        return (
-            <div className="text-center text-gray-400">
-                Memuat data grafik...
-            </div>
-        );
-    }
-
-    // ======================
-    // 🔢 OLAH DATA (SAMA DGN SEBELUMNYA)
-    // ======================
-    const dataWithIndex = data.map((d, i) => {
+            const dataWithIndex = data.map((d, i) => {
         const jarak = Number(d.jarak);
         const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
         const volume =
@@ -84,6 +29,89 @@ export default function Grafik({ full = false }) {
             volume: Math.round(volume / 1000),
         };
     });
+
+    useEffect(() => {
+        if (!full || !focusdate || !scrollRef.current) return;
+
+        const target = new Date(focusdate);
+        target.setHours(0, 0, 0, 0);
+
+        const idx = dataWithIndex.findIndex(d => {
+            const dDate = new Date(d.dateObj);
+            dDate.setHours(0, 0, 0, 0);
+            return dDate >= target;
+        });
+
+        if (idx >= 0) {
+            scrollRef.current.scrollLeft = idx * ITEM_WIDTH;
+        }
+    }, [focusdate, dataWithIndex, full]);
+
+      if (!data.length) {
+        return (
+            <div className="text-center text-gray-400">
+                Memuat data grafik...
+            </div>
+        );
+    }
+
+
+    // const [data, setData] = useState([]);
+
+    // ======================
+    // 🔥 FETCH DATA
+    // ======================
+    // useEffect(() => {
+    //     const q = full
+    //         ? query(
+    //             collection(firestore, "ProduksiHarianUltrasonik"),
+    //             orderBy("waktuTS", "asc")
+    //         )
+    //         : query(
+    //             collection(firestore, "ProduksiHarianUltrasonik"),
+    //             orderBy("waktuTS", "desc"),
+    //             limit(12)
+    //         );
+
+    //     const unsub = onSnapshot(q, (snapshot) => {
+    //         const newData = snapshot.docs
+    //             .map((doc) => {
+    //                 const d = doc.data();
+    //                 return {
+    //                     id: doc.id,
+    //                     ...d,
+    //                     dateObj: d.waktuTS?.toDate(),
+    //                 };
+    //             })
+    //             .sort((a, b) => a.dateObj - b.dateObj);
+
+    //         setData(newData);
+    //     });
+
+    //     return () => unsub();
+    // }, [full]);
+
+
+    // useEffect(() => {
+    //     if (full && scrollRef.current && data.length) {
+    //         // tunggu render selesai
+    //         setTimeout(() => {
+    //             scrollRef.current.scrollLeft =
+    //                 scrollRef.current.scrollWidth;
+    //         }, 100);
+    //     }
+    // }, [full, data]);
+
+
+
+  
+
+    // ======================
+    // 🔢 OLAH DATA (SAMA DGN SEBELUMNYA)
+    // ======================
+    
+
+     
 
     const total = dataWithIndex.length;
 
@@ -117,6 +145,10 @@ export default function Grafik({ full = false }) {
             </div>
         );
     };
+
+
+   
+
 
     // ======================
     // 📊 ISI CHART (DIPAKAI 2 MODE)

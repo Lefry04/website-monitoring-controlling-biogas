@@ -1,7 +1,9 @@
 import Input from "../Elements/Input";
 import Button from "../Elements/Button";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // icon mata
+
 
 const Form = () => {
 
@@ -10,6 +12,8 @@ const Form = () => {
     useEffect(() => {
         emailRef.current.focus();
     }, []);
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = (event) => {
         event.preventDefault();
@@ -24,7 +28,17 @@ const Form = () => {
             <h1 className="font-medium text-[28px]">Siap mengelola energi cerdas? <br />Masuk sekarang!</h1>
             <form onSubmit={handleLogin}>
                 <Input type="email" label="Email" placeholder="Masukkan email anda" name="email" className="border border-white lg:text-lg text-sm text-white" ukuran="mb-7" ref={emailRef} />
-                <Input type="password" label="Kata Sandi" placeholder="Masukkan kata sandi anda" name="password" className="border border-white lg:text-lg text-sm text-white" />
+                <div className="relative mb-7">
+                    <Input type={showPassword ? "text" : "password"}
+                        label="Kata Sandi" placeholder="Masukkan kata sandi anda" name="password" className="border border-white lg:text-lg text-sm text-white" />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute top-1/2 h-8 text-xl right-3 text-white"
+                    >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                </div>
                 <p className="w-full text-end text-white/75 underline mb-6 font-light cursor-pointer"><Link to="/login/password">Lupa kata sandi?</Link></p>
                 <Button classname="w-full col-login-button py-4 rounded-2xl" type="submit">Masuk</Button>
             </form>

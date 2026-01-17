@@ -1,13 +1,3 @@
-// import {
-//     ResponsiveContainer,
-//     ComposedChart,
-//     XAxis,
-//     YAxis,
-//     Tooltip,
-//     Bar,
-//     Scatter,
-//     CartesianGrid,
-// } from "recharts";
 import {
     ResponsiveContainer,
     ComposedChart,
@@ -32,109 +22,7 @@ const data = [
 
 export default function ChartProduksiHarian({ title }) {
 
-    // const { title } = props;
-
     const [data, setData] = useState([]);
-
-    // useEffect(() => {
-    //     const fetchData = async () => {
-    //         try {
-    //             const q = query(
-    //                 collection(firestore, "ProduksiHarianUltrasonik"),
-    //                 orderBy("index", "desc"),
-    //                 limit(4)
-    //             );
-
-    //             const snap = await getDocs(q);
-
-    //             const fetched = snap.docs.map(doc => {
-    //                 const d = doc.data();
-
-    //                 // Convert waktu → tanggal "dd/mm"
-    //                 let tanggal = d.waktu;
-    //                 if (typeof tanggal === "string") {
-    //                     const parts = tanggal.split(" ")[0].split("/"); // "21/11/2025"
-    //                     tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
-    //                 }
-
-    //                 return {
-    //                     tanggal: tanggal,
-    //                     produksi: d.jarak, // pakai JARAK sebagai produksi
-    //                     index: d.index
-    //                 };
-    //             });
-
-    //             // sort ascending supaya tanggal lama → baru
-    //             const sorted = fetched.sort((a, b) => a.index - b.index);
-
-    //             setData(sorted);
-
-    //         } catch (err) {
-    //             console.log("Error fetching data:", err);
-    //         }
-    //     };
-
-    //     fetchData();
-    // }, []);
-
-
-    // useEffect(() => {
-    //     const fetchData = async () => {
-    //         try {
-    //             const q = query(
-    //                 collection(firestore, "ProduksiHarianUltrasonik"),
-    //                 orderBy("index", "desc"),
-    //                 limit(4)
-    //             );
-
-    //             const snap = await getDocs(q);
-
-    //             const fetched = snap.docs.map((doc) => {
-    //                 const d = doc.data();
-
-    //                 // --- FORMAT TANGGAL ---
-    //                 let tanggal = d.waktu;
-    //                 if (typeof tanggal === "string") {
-    //                     const parts = tanggal.split(" ")[0].split("/");
-    //                     tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
-    //                 }
-
-    //                 // --- HITUNG VOLUME ---
-    //                 const jarak = Number(d.jarak);
-
-    //                 // radius = 12 + ((11.5 - 12) / 16.5) * jarak
-    //                 const radius =
-    //                     12 + ((11.5 - 12) / 16.5) * jarak;
-
-    //                 // Volume kerucut terpancung (cm³)
-    //                 // V = 1/3 * π * t * (R² + Rr + r²)
-    //                 const volume =
-    //                     (1 / 3) *
-    //                     Math.PI *
-    //                     jarak *
-    //                     (12 ** 2 + 12 * radius + radius ** 2);
-
-    //                 // cm³ → liter + bulatkan 1 desimal
-    //                 const volumeLiter = Number((volume / 1000).toFixed(1));
-
-    //                 return {
-    //                     tanggal,
-    //                     produksi: volumeLiter, // ← PAKAI VOLUME
-    //                     jarak: d.jarak,
-    //                     index: d.index,
-    //                 };
-    //             });
-
-    //             // Balik urutan → lama ke baru
-    //             setData(fetched.sort((a, b) => a.index - b.index));
-
-    //         } catch (err) {
-    //             console.log("Error fetching data:", err);
-    //         }
-    //     };
-
-    //     fetchData();
-    // }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -150,40 +38,13 @@ export default function ChartProduksiHarian({ title }) {
                 // 2) Kelompokkan berdasarkan tanggal (dd/mm)
                 const grouped = {};
 
-                // snap.docs.forEach(doc => {
-                //     const d = doc.data();
-
-                //     // format tanggal dd/mm
-                //     let tanggal = d.waktu;
-                //     if (typeof tanggal === "string") {
-                //         const parts = tanggal.split(" ")[0].split("/");
-                //         tanggal = `${parts[0]}/${parts[1]}`; // "21/11"
-                //     }
-
-                //     // Hitung volume
-                //     const jarak = Number(d.jarak);
-
-                //     const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
-
-                //     const volume =
-                //         (1 / 3) *
-                //         Math.PI *
-                //         jarak *
-                //         (12 ** 2 + 12 * radius + radius ** 2);
-
-                //     const volumeLiter = Number((volume / 1000).toFixed(1));
-
-                //     // masukkan ke grup
-                //     if (!grouped[tanggal]) grouped[tanggal] = [];
-                //     grouped[tanggal].push(volumeLiter);
-                // });
-
                 snap.docs.forEach(doc => {
                     const d = doc.data();
                     const tanggalTS = d.waktuTS ? d.waktuTS.toDate() : new Date();
 
                     // --- kunci hanya tanggal/bulan ---
-                    const key = `${tanggalTS.getDate()}/${tanggalTS.getMonth() + 1}`;
+                    const key = tanggalTS.toISOString().split("T")[0];
+                    // hasil: "2026-01-09"
 
                     const jarak = Number(d.jarak);
                     const radius = 12 + ((11.5 - 12) / 16.5) * jarak;
@@ -196,37 +57,13 @@ export default function ChartProduksiHarian({ title }) {
                 });
 
 
-                // 3) Hitung rata-rata per tanggal
-                // const averaged = Object.keys(grouped).map(tanggal => {
-                //     const arr = grouped[tanggal];
-                //     const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-                //     return {
-                //         tanggal,
-                //         produksi: Number(avg.toFixed(1))
-                //     };
-                // });
-
-                // // 4) Urutkan berdasarkan tanggal terbaru → lama
-                // const sorted = averaged.sort((a, b) => {
-                //     const [da, ma] = a.tanggal.split("/");
-                //     const [db, mb] = b.tanggal.split("/");
-                //     return new Date(2025, ma - 1, da) - new Date(2025, mb - 1, db);
-                // });
-
-                // // 5) Ambil 4 tanggal terakhir
-                // const lastFour = sorted.slice(-4);
-
-                // setData(lastFour);
-
                 const averaged = Object.keys(grouped).map(key => {
                     const arr = grouped[key];
                     const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
 
-                    // Buat Date untuk sorting
-                    const [d, m] = key.split("/").map(Number);
                     return {
-                        waktuTS: new Date(2025, m - 1, d), // tahun bebas untuk sorting
-                        label: key, // simpan string dd/mm untuk XAxis
+                        waktuTS: new Date(key), // ASLI
+                        label: key,
                         produksi: Number(avg.toFixed(1))
                     };
                 });
@@ -236,8 +73,8 @@ export default function ChartProduksiHarian({ title }) {
 
                 // Ambil 4 tanggal terakhir
                 const lastFour = averaged.slice(-4);
-
                 setData(lastFour);
+
 
             } catch (err) {
                 console.log("Error fetching data:", err);
@@ -249,18 +86,6 @@ export default function ChartProduksiHarian({ title }) {
 
     const lastValue = data.length > 0 ? data[data.length - 1].produksi : 0;
 
-
-    // const CustomTooltip = ({ active, payload }) => {
-    //     if (active && payload && payload.length) {
-    //         const data = payload[0].payload; // data point yang sedang di-hover
-    //         return (
-    //             <div className="bg-white p-2 rounded shadow border text-sm">
-    //                 <p><strong>Volume:</strong> {data.produksi}</p>
-    //             </div>
-    //         );
-    //     }
-    //     return null;
-    // };
 
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {

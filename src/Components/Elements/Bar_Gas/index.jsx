@@ -1,13 +1,14 @@
-const HorizontalBar = ({ terdeteksi = false, ch4 }) => {
+const HorizontalBar = ({ terdeteksi = false, ch4, co2 }) => {
 
     const col = terdeteksi ? "bg-red-500" : "bg-blue-300";
+    const statusText = terdeteksi ? "Gas Bocor" : "Tidak Bocor";
     // ch4 = ch4.toFixed(2);
 
     return (
         <div className="w-full px-4 flex font-extralight flex-row justify-between mb-6 mt-3">
             <div className="text-2xl flex flex-col items-center gap-1">
                 <p>{ch4} % CH<span className="text-xs">4</span></p>
-                <p>60 % CH<span className="text-xs">4</span></p>
+                <p>{co2} % CO<span className="text-xs">2</span></p>
                 <p className="text-base font-bold text-green-500">Optimal Level</p>
             </div>
             <div
@@ -24,7 +25,7 @@ const HorizontalBar = ({ terdeteksi = false, ch4 }) => {
                             }`}
                     ></div>
                 </div>
-                <p className="text-base font-bold mt-7 text-green-500">Tidak Bocor</p>
+                <p className="text-base font-bold mt-7 text-green-500">{statusText}</p>
             </div>
         </div>
     );

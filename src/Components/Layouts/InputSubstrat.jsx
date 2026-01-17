@@ -5,6 +5,8 @@ import { firestore } from "../../services/firebase";
 
 const InputSubtrat = () => {
 
+    const [waktu, setWaktu] = useState("");
+
     const [substrats, setSubstrats] = useState([
         { jenis: "", ukuran: "", satuan: "" },
     ]);
@@ -47,14 +49,8 @@ const InputSubtrat = () => {
 
         const nextId = await generateNextId();
 
-        const now = new Date();
-        const formattedTime =
-            now.toLocaleDateString("id-ID") +
-            " " +
-            now.toLocaleTimeString("id-ID").replaceAll(":", ".");
-
         await setDoc(doc(firestore, "PengisianSubstrat", nextId), {
-            waktu: formattedTime,
+            waktu: waktu,
             items: substrats,
         });
 
@@ -66,22 +62,32 @@ const InputSubtrat = () => {
     const [riwayat, setRiwayat] = useState([]);
 
     useEffect(() => {
-    const fetchData = async () => {
-        const querySnapshot = await getDocs(collection(firestore, "PengisianSubstrat"));
-        const data = [];
+        const fetchData = async () => {
+            const querySnapshot = await getDocs(collection(firestore, "PengisianSubstrat"));
+            const data = [];
 
-        querySnapshot.forEach((doc) => {
-            data.push(doc.data());
-        });
+            querySnapshot.forEach((doc) => {
+                data.push(doc.data());
+            });
 
-        // Urutkan berdasarkan waktu
-        data.sort((a, b) => new Date(a.waktu) - new Date(b.waktu));
+            // Urutkan berdasarkan waktu
+            data.sort((a, b) => new Date(a.waktu) - new Date(b.waktu));
 
-        setRiwayat(data);
-    };
+            setRiwayat(data);
+        };
 
-    fetchData();
-}, []);
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const now = new Date();
+        const formattedTime =
+            now.toLocaleDateString("id-ID") +
+            " " +
+            now.toLocaleTimeString("id-ID").replaceAll(":", ".");
+
+        setWaktu(formattedTime);
+    }, []);
 
 
     // const handleSubmit = (e) => {
@@ -141,9 +147,11 @@ const InputSubtrat = () => {
                     <label className="font-light">Waktu Pengisian</label>
                     <input
                         type="text"
-                        placeholder="Pilih waktu pengisian substrat"
-                        className="w-7/10 rounded-2xl bg-white py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#7A7D6D]"
+                        value={waktu}
+                        disabled
+                        className="w-7/10 rounded-2xl bg-gray-100 py-3 px-4 cursor-not-allowed text-gray-600"
                     />
+
                 </div>
 
                 {/* Loop data substrat */}

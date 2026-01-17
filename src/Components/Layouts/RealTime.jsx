@@ -1,5 +1,6 @@
 import Monitoring from "../Fragments/CardsMonitoring";
 import HorizontalBar from "../Elements/Bar_Tekanan_pH";
+import HorizontalBarpH from "../Elements/Bar_pH";
 import HorizontalBarCairGas from "../Elements/Bar_Cairan";
 import HorizontalBarGas from "../Elements/Bar_Gas";
 import StatusSuhu from "../Elements/Status_Suhu";
@@ -39,19 +40,31 @@ const RealTime = () => {
     }
 
     // sensor pH
-    let pHStatus, pHColor, colpH = "bg-red-500", phKeadaan = "Tidak Optimal";
+    let pHStatus, pHStatus2, pHColor, pHColor2, colpH = "bg-red-500", colpH2 = "bg-red-500";
     let ph = sensor?.ph_sensor_IDE?.value?.toFixed(1) ?? '-';
-    if (sensor?.ph_sensor_IDE?.value > 6.5 && sensor?.ph_sensor_IDE?.value <= 8.5) {
+    let ph2 = sensor?.ph_sensor_IDE_2?.value?.toFixed(1) ?? '-';
+    if (ph > 6.5 && ph <= 8.5) {
         pHStatus = "Netral";
         pHColor = "text-green-500";
         colpH = "bg-green-500";
-        phKeadaan = "Optimal";
-    } else if (sensor?.ph_sensor_IDE?.value <= 6.5) {
+    } else if (ph <= 6.5) {
         pHStatus = "Asam";
         pHColor = "text-red-500";
     } else {
         pHStatus = "Basa";
         pHColor = "text-red-500";
+    }
+
+    if (ph2 > 6.5 && ph2 <= 8.5) {
+        pHStatus2 = "Netral";
+        pHColor2 = "text-green-500";
+        colpH2 = "bg-green-500";
+    } else if (ph2 <= 6.5) {
+        pHStatus2 = "Asam";
+        pHColor2 = "text-red-500";
+    } else {
+        pHStatus2 = "Basa";
+        pHColor2 = "text-red-500";
     }
 
     // sensor jarak
@@ -99,9 +112,8 @@ const RealTime = () => {
 
                 <Monitoring sensor="Tingkat Keasaman (pH)">
                     <Monitoring.Bar>
-                        <HorizontalBar value={sensor?.ph_sensor_IDE?.value} max={14} col1={colpH} col2={colpH} col3={colpH} />
+                        <HorizontalBarpH bot={ph} top={ph2} max={14} col1={colpH} col2={colpH} col3={colpH} col21={colpH2} col22={colpH2} col23={colpH2} tex_top={pHColor2} tex_bot={pHColor} statustop={pHStatus2} statusbot={pHStatus} />
                     </Monitoring.Bar>
-                    <Monitoring.Desc labelcol={pHColor} label={pHStatus} labelnilai="Nilai pH" nilai={ph} keadaan="Tidak Optimal" />
                 </Monitoring>
 
                 <Monitoring sensor="Cairan Subtrat">
@@ -120,7 +132,7 @@ const RealTime = () => {
 
                 <Monitoring sensor="Gas Metana">
                     <Monitoring.Bar>
-                        <HorizontalBarGas terdeteksi={terdeteksi} ch4={sensor?.methane_IDE?.percent_adjusted} />
+                        <HorizontalBarGas terdeteksi={terdeteksi} ch4={sensor?.methane_IDE?.percent_adjusted} co2={sensor?.carbondioxide_IDE?.co2_relative_percent}/>
                     </Monitoring.Bar>
                 </Monitoring>
 

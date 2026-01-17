@@ -20,6 +20,8 @@ import Produksi from './Pages/produksi.jsx'
 import Analitik from './Pages/analitik.jsx'
 import Notifikasi from './Pages/notifikasi.jsx'
 import Profil from './Pages/profil.jsx'
+import GrafikSuhu from './Pages/grafik_suhu.jsx'
+import { AuthProvider } from './services/AuthContext.jsx';
 
 const router = createBrowserRouter([
   {
@@ -78,12 +80,18 @@ const router = createBrowserRouter([
   {
     path: '/landing',
     element: <Landing />,
+  },
+  {
+    path: '/grafik_suhu',
+    element: <GrafikSuhu />,
   }
 ]
 )
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
 )
