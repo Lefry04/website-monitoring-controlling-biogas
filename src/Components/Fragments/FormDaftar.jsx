@@ -9,6 +9,18 @@ const Form = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const { loginWithGoogle } = useAuth();
+
+  const handleGoogle = async () => {
+    try {
+      const user = await loginWithGoogle();
+      console.log("Login Google:", user);
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Login Google dibatalkan atau gagal");
+    }
+  };
+
   const [error, setError] = useState("");
 
   // state untuk toggle visibility password
@@ -90,6 +102,14 @@ const Form = () => {
           Daftar
         </Button>
       </form>
+
+      <Button
+        type="button"
+        onClick={handleGoogle}
+        classname="w-full bg-white text-black py-4 rounded-2xl"
+      >
+        Masuk dengan Google
+      </Button>
 
       <p className="w-full text-end text-white font-light">
         Sudah memiliki akun?{" "}

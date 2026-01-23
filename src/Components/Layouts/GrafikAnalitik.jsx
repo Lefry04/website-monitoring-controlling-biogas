@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "../../services/firebase";
+import { exportToExcel } from "../../utils/exportExcel";
+import { exportToCSV } from "../../utils/exportCSV";
 
 const bulanIndonesia = [
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -18,27 +20,35 @@ const GrafikAnalitik = () => {
         return bulanIndonesia[now.getMonth()];
     });
 
-    const [showFullGrafik, setShowFullGrafik] = useState(false);
-
     const [startDate, setStartDate] = useState(() => {
         const d = new Date();
         d.setDate(d.getDate() - 7);
         return d.toISOString().split("T")[0];
     });
 
+    const [endDate, setEndDate] = useState(() => {
+        const d = new Date();
+        return d.toISOString().split("T")[0];
+    });
+
+    const [downloadData, setDownloadData] = useState([]);
+
+    const [showFullGrafik, setShowFullGrafik] = useState(false);
+
     const [dataGrafik, setDataGrafik] = useState([]);
 
     // grafik kecil (card)
     const smallData = dataGrafik.slice(-12);
 
-    // grafik full (modal + filter tanggal)
     const fullData = dataGrafik.filter(d => {
         const start = new Date(startDate);
+        const end = new Date(endDate);
+
         start.setHours(0, 0, 0, 0);
-        return d.dateObj >= start;
+        end.setHours(23, 59, 59, 999);
+
+        return d.dateObj >= start && d.dateObj <= end;
     });
-
-
 
     const [history, setHistory] = useState({
         Januari: [], Februari: [], Maret: [], April: [], Mei: [], Juni: [],
@@ -140,6 +150,59 @@ const GrafikAnalitik = () => {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        const fetchDownloadData = async () => {
+            const snap = await getDocs(
+                collection(firestore, "LoggingSensorLengkap")
+            );
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+
+            const filtered = snap.docs
+                .map(doc => doc.data())
+                .filter(d => {
+                    const t = d.waktuTS?.toDate();
+                    return t && t >= start && t <= end;
+                })
+                .sort((a, b) => a.waktuTS.toDate() - b.waktuTS.toDate());
+
+            setDownloadData(filtered);
+        };
+
+        fetchDownloadData();
+    }, [startDate, endDate]);
+
+    useEffect(() => {
+        const fetchDownloadData = async () => {
+            const snap = await getDocs(
+                collection(firestore, "LoggingSensorLengkap")
+            );
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+
+            const filtered = snap.docs
+                .map(doc => doc.data())
+                .filter(d => {
+                    const t = d.waktuTS?.toDate();
+                    return t && t >= start && t <= end;
+                })
+                .sort((a, b) => a.waktuTS.toDate() - b.waktuTS.toDate());
+
+            setDownloadData(filtered);
+        };
+
+        fetchDownloadData();
+    }, [startDate, endDate]);
+
+
     const filteredData = showFullGrafik
         ? dataGrafik.filter(d => {
             const start = new Date(startDate);
@@ -155,6 +218,65 @@ const GrafikAnalitik = () => {
         activeMonth,
         bulanIndonesia[activeIndex + 1]
     ].filter(Boolean);
+
+    const handleDownloadSensorExcel = () => {
+        if (downloadData.length === 0) return;
+
+        const excelData = downloadData.map((d, i) => ({
+            No: i + 1,
+            Waktu: d.waktuTS.toDate().toLocaleString("id-ID"),
+
+            CH4_percent: d.methane_percent,
+            CO2_percent: d.carbon_dioxide_percent,
+
+            Flow_Lmin: d.flow_lmin,
+            Pressure_kPa: d.pressure_kpa,
+
+            Temp_External_C: d.external_c,
+            Temp_Internal_Up_C: d.internal_up_c,
+            Temp_Internal_Down_C: d.internal_down_c,
+
+            pH_Top: d.ph_top,
+            pH_Bottom: d.ph_bottom,
+
+            Proximity_cm: d.proximity_cm,
+        }));
+
+        exportToExcel(
+            excelData,
+            `LoggingSensorLengkap_${startDate}_sampai_${endDate}`
+        );
+    };
+
+    const handleDownloadSensorCSV = () => {
+        if (downloadData.length === 0) return;
+
+        const csvData = downloadData.map((d, i) => ({
+            No: i + 1,
+            Waktu: d.waktuTS.toDate().toLocaleString("id-ID"),
+
+            CH4_percent: d.methane_percent,
+            CO2_percent: d.carbon_dioxide_percent,
+
+            Flow_Lmin: d.flow_lmin,
+            Pressure_kPa: d.pressure_kpa,
+
+            Temp_External_C: d.external_c,
+            Temp_Internal_Up_C: d.internal_up_c,
+            Temp_Internal_Down_C: d.internal_down_c,
+
+            pH_Top: d.ph_bottom,
+            pH_Bottom: d.ph_top,
+
+            Proximity_cm: d.proximity_cm,
+        }));
+
+        exportToCSV(
+            csvData,
+            `LoggingSensorLengkap_${startDate}_sampai_${endDate}`
+        );
+    };
+
 
     return (
         <BoxSec>
@@ -249,13 +371,43 @@ const GrafikAnalitik = () => {
 
                         <div className="bg-white rounded-3xl p-6 overflow-x-auto">
                             <h3 className="font-semibold mb-4">Grafik Produksi Gas</h3>
-                            <input
+                            {/* <input
                                 type="date"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
                                 className="box px-4 py-2 rounded-xl mb-4"
-                            />
-                            <Grafik data={fullData} full focusdate={startDate}/>
+                            /> */}
+                            <div className="flex flex-wrap items-center gap-4 mb-4">
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={e => setStartDate(e.target.value)}
+                                    className="box px-4 py-2 rounded-xl"
+                                />
+
+                                <span className="text-gray-500">s/d</span>
+
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={e => setEndDate(e.target.value)}
+                                    className="box px-4 py-2 rounded-xl"
+                                />
+
+                                <button
+                                    onClick={handleDownloadSensorCSV}
+                                    disabled={downloadData.length === 0}
+                                    className={`px-4 py-2 rounded-xl text-white
+      ${downloadData.length === 0
+                                            ? "bg-gray-400 cursor-not-allowed"
+                                            : "bg-blue-600 hover:bg-blue-700"
+                                        }`}
+                                >
+                                    Download Data Sensor
+                                </button>
+                            </div>
+
+                            <Grafik data={fullData} full focusdate={startDate} />
                         </div>
                     </div>
                 </div>

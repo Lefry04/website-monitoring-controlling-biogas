@@ -8,8 +8,6 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { useEffect, useState, useRef } from "react";
-// import { firestore } from "../../../services/firebase";
-// import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 
 export default function Grafik({ full = false, data = [], focusdate }) {
 
@@ -54,57 +52,6 @@ export default function Grafik({ full = false, data = [], focusdate }) {
             </div>
         );
     }
-
-
-    // const [data, setData] = useState([]);
-
-    // ======================
-    // 🔥 FETCH DATA
-    // ======================
-    // useEffect(() => {
-    //     const q = full
-    //         ? query(
-    //             collection(firestore, "ProduksiHarianUltrasonik"),
-    //             orderBy("waktuTS", "asc")
-    //         )
-    //         : query(
-    //             collection(firestore, "ProduksiHarianUltrasonik"),
-    //             orderBy("waktuTS", "desc"),
-    //             limit(12)
-    //         );
-
-    //     const unsub = onSnapshot(q, (snapshot) => {
-    //         const newData = snapshot.docs
-    //             .map((doc) => {
-    //                 const d = doc.data();
-    //                 return {
-    //                     id: doc.id,
-    //                     ...d,
-    //                     dateObj: d.waktuTS?.toDate(),
-    //                 };
-    //             })
-    //             .sort((a, b) => a.dateObj - b.dateObj);
-
-    //         setData(newData);
-    //     });
-
-    //     return () => unsub();
-    // }, [full]);
-
-
-    // useEffect(() => {
-    //     if (full && scrollRef.current && data.length) {
-    //         // tunggu render selesai
-    //         setTimeout(() => {
-    //             scrollRef.current.scrollLeft =
-    //                 scrollRef.current.scrollWidth;
-    //         }, 100);
-    //     }
-    // }, [full, data]);
-
-
-
-  
 
     // ======================
     // 🔢 OLAH DATA (SAMA DGN SEBELUMNYA)

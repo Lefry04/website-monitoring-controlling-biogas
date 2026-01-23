@@ -3,7 +3,7 @@ const CardsMonitoring = (props) => {
     const { sensor, children } = props;
 
     return (
-        <div className="w-full h-full bg-white rounded-2xl p-6 font-bold text-base flex flex-col gap-3">
+        <div className="w-full h-full bg-white rounded-2xl p-6 font-bold text-base flex flex-col gap-3 relative">
             <h1>{sensor}</h1>
             {children}
         </div>

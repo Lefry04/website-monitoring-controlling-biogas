@@ -6,11 +6,23 @@ import pengaduk from "../../assets/pengaduk.svg";
 import notifikasi from "../../assets/notifikasi.svg";
 import profil from "../../assets/profilnav.svg";
 import keluar from "../../assets/keluar.svg";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../services/AuthContext";
 
 const NavigasiBar = () => {
 
     const location = useLocation();
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate("/login");
+        } catch (error) {
+            console.error("Gagal logout:", error);
+        }
+    };
 
     const navItems = [
         { label: "Beranda", src: beranda, path: "/dashboard" },
@@ -34,7 +46,9 @@ const NavigasiBar = () => {
                     />
                 ))}
             </div>
-            <Navigasi children="Keluar" src={keluar} />
+            <div onClick={handleLogout} className="cursor-pointer">
+                <Navigasi children="Keluar" src={keluar} />
+            </div>
 
         </div>
     )

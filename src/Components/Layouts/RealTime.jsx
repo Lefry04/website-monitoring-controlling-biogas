@@ -6,15 +6,24 @@ import HorizontalBarGas from "../Elements/Bar_Gas";
 import StatusSuhu from "../Elements/Status_Suhu";
 import CircularBar from "../Elements/Bar_Aliran";
 import BoxUtama from "../Fragments/BoxUtama";
+import GrafikSensor from "../Elements/Grafik_Sensor";
+import PopUp from "../Elements/Grafik_PopUp";
+import useSensorHistory from "../../hooks/useSensorHistory";
 import { useEffect, useState } from "react";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, set } from "firebase/database";
 import { db } from "../../services/firebase";
-import { meta } from "@eslint/js";
 
 const RealTime = () => {
 
     // pengambilan data firebase realtime database
     const [sensor, setSensor] = useState(null);
+
+    const dataHistory = useSensorHistory();
+
+    const [openPH, setOpenPH] = useState(false);
+    const [openTekanan, setOpenTekanan] = useState(false);
+    const [openSuhu, setOpenSuhu] = useState(false);
+
     useEffect(() => {
         const sensorRef = ref(db, '/');
         const unsubscribe = onValue(sensorRef, (snapshot) => {
@@ -24,7 +33,7 @@ const RealTime = () => {
 
         return () => unsubscribe();
     }, []);
-    
+
     // sensor tekanan
     let tekananStatus, tekananColor = "text-red-500", tekananKeadaan;
     if (sensor?.pressure_IDE?.biogas_pressure_kpa < 3.3) {
@@ -67,12 +76,6 @@ const RealTime = () => {
         pHColor2 = "text-red-500";
     }
 
-    // sensor jarak
-    // let jarakPrev = sensor?.ultrasonik?.jarak;
-    // let jarakMax = 19; // dalam cm
-    // let jarakNow = jarakMax - jarakPrev;
-
-
     // sensor suhu
     let suhuStatus, suhuColor;
     if ((sensor?.suhu?.temp >= 25 && sensor?.suhu?.temp <= 40) && (sensor?.suhu?.hum >= 40 && sensor?.suhu?.hum <= 80)) {
@@ -108,13 +111,60 @@ const RealTime = () => {
                         <HorizontalBar value={sensor?.pressure_IDE?.biogas_pressure_kpa} max={10} satuan="kPa" col1="bg-red-500" col2="bg-green-400" col3="bg-red-500" />
                     </Monitoring.Bar>
                     <Monitoring.Desc labelcol={tekananColor} label={tekananStatus} labelnilai="Tekanan" nilai={sensor?.pressure_IDE?.biogas_pressure_kpa} satuan="kPa" kapasitas={10} keadaan={tekananKeadaan} />
+                    <button
+                        onClick={() => setOpenTekanan(true)}
+                        className="text-sm text-green-900 underline absolute right-7 top-7"
+                    >
+                        Riwayat (grafik)
+                    </button>
                 </Monitoring>
+
+                <PopUp
+                    open={openTekanan}
+                    onClose={() => setOpenTekanan(false)}
+                    title="Grafik Tekanan Gas"
+                >
+                    <GrafikSensor
+                        data={dataHistory}
+                        yDomain={[0, 10]}
+                        yLabel="Nilai Tekanan (kPa)"
+                        lines={[
+                            { key: "pressure_kpa", label: "tekanan gas", color: "#000000" },
+                        ]}
+                        full
+                    />
+                </PopUp>
 
                 <Monitoring sensor="Tingkat Keasaman (pH)">
                     <Monitoring.Bar>
                         <HorizontalBarpH bot={ph} top={ph2} max={14} col1={colpH} col2={colpH} col3={colpH} col21={colpH2} col22={colpH2} col23={colpH2} tex_top={pHColor2} tex_bot={pHColor} statustop={pHStatus2} statusbot={pHStatus} />
                     </Monitoring.Bar>
+                    <Monitoring.Desc />
+                    <button
+                        onClick={() => setOpenPH(true)}
+                        className="text-sm text-green-900 underline absolute right-7 top-7"
+                    >
+                        Riwayat (grafik)
+                    </button>
                 </Monitoring>
+
+                <PopUp
+                    open={openPH}
+                    onClose={() => setOpenPH(false)}
+                    title="Grafik pH Biogas"
+                >
+                    <GrafikSensor
+                        data={dataHistory}
+                        yDomain={[0, 14]}
+                        yLabel="Nilai pH"
+                        lines={[
+                            { key: "ph_bottom", label: "pH Atas", color: "#3769c3" },
+                            { key: "ph_top", label: "pH Bawah", color: "#9fc2ff" },
+                        ]}
+                        full
+                    />
+                </PopUp>
+
 
                 <Monitoring sensor="Cairan Subtrat">
                     <Monitoring.Bar>
@@ -128,17 +178,41 @@ const RealTime = () => {
                         <StatusSuhu temp_ex={sensor?.temp_external_IDE?.temperature_c} top={sensor?.temp_internal_IDE?.up_c} bot={sensor?.temp_internal_IDE?.down_c} />
                     </Monitoring.Bar>
                     <Monitoring.Desc labelcol={suhuColor} label={suhuStatus} />
+                    <button
+                        onClick={() => setOpenSuhu(true)}
+                        className="text-sm text-green-900 underline absolute right-7 top-7"
+                    >
+                        Riwayat (grafik)
+                    </button>
                 </Monitoring>
+
+                <PopUp
+                    open={openSuhu}
+                    onClose={() => setOpenSuhu(false)}
+                    title="Grafik Suhu"
+                >
+                    <GrafikSensor
+                        data={dataHistory}
+                        yDomain={[26, 30]}
+                        yLabel="Nilai Suhu (°C)"
+                        lines={[
+                            { key: "external_c", label: "Suhu Eksternal", color: "#0f532c" },
+                            { key: "internal_up_c", label: "Suhu Internal Atas", color: "#3769c3" },
+                            { key: "internal_down_c", label: "Suhu Internal Bawah", color: "#9fc2ff" },
+                        ]}
+                        full
+                    />
+                </PopUp>
 
                 <Monitoring sensor="Gas Metana">
                     <Monitoring.Bar>
-                        <HorizontalBarGas terdeteksi={terdeteksi} ch4={sensor?.methane_IDE?.percent_adjusted} co2={sensor?.carbondioxide_IDE?.co2_relative_percent}/>
+                        <HorizontalBarGas terdeteksi={terdeteksi} ch4={sensor?.methane_IDE?.percent_adjusted} co2={sensor?.carbondioxide_IDE?.co2_relative_percent} />
                     </Monitoring.Bar>
                 </Monitoring>
 
                 <Monitoring sensor="Aliran Gas">
                     <Monitoring.Bar>
-                        <CircularBar value={sensor?.aliran?.flow_Lmin} satuan="%"/>
+                        <CircularBar value={sensor?.aliran?.flow_Lmin} satuan="%" />
                     </Monitoring.Bar>
                     <Monitoring.Desc labelcol="" label="Aliran Lemah" />
                 </Monitoring>

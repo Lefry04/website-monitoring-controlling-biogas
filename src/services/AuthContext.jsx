@@ -1,97 +1,16 @@
-// import { createContext, useContext, useEffect, useState } from "react";
-// import { onAuthStateChanged } from "firebase/auth";
-// import { auth } from "./firebase";
-
-// const AuthContext = createContext();
-
-// export const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const unsub = onAuthStateChanged(auth, (u) => {
-//       setUser(u);
-//       setLoading(false);
-//     });
-//     return () => unsub();
-//   }, []);
-
-//   return (
-//     <AuthContext.Provider value={{ user }}>
-//       {!loading && children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => useContext(AuthContext);
-
-// import { createContext, useContext } from "react";
-// import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-// import { auth } from "./firebase";
-
-// const AuthContext = createContext();
-
-// export const AuthProvider = ({ children }) => {
-
-//   const register = (email, password) => {
-//     return createUserWithEmailAndPassword(auth, email, password);
-//   };
-
-//   return (
-//     <AuthContext.Provider value={{ register }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   return useContext(AuthContext);
-// };
-
-// import { createContext, useContext } from "react";
-// import {
-//   createUserWithEmailAndPassword,
-//   sendEmailVerification
-// } from "firebase/auth";
-// import { auth } from "./firebase";
-
-// const AuthContext = createContext();
-
-// export const AuthProvider = ({ children }) => {
-
-//   const register = async (email, password) => {
-//     // 1️⃣ Buat user
-//     const userCredential = await createUserWithEmailAndPassword(
-//       auth,
-//       email,
-//       password
-//     );
-
-//     // 2️⃣ Kirim email verifikasi
-//     await sendEmailVerification(userCredential.user);
-
-//     return userCredential.user;
-//   };
-
-//   return (
-//     <AuthContext.Provider value={{ register }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   return useContext(AuthContext);
-// };
-
 import { createContext, useContext } from "react";
 import {
   createUserWithEmailAndPassword,
-  sendEmailVerification
+  sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut
 } from "firebase/auth";
 import { auth } from "./firebase";
 
 const AuthContext = createContext();
+
+const googleProvider = new GoogleAuthProvider();
 
 export const AuthProvider = ({ children }) => {
 
@@ -114,8 +33,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+  };
+
   return (
-    <AuthContext.Provider value={{ register, resendVerification }}>
+    <AuthContext.Provider value={{ register, resendVerification, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
