@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 
 // load service account dari env
 const serviceAccount = JSON.parse(
-  process.env.FIREBASE_SERVICE_ACCOUNT
+  fs.readFileSync("serviceAccountKey.json", "utf8")
 );
 
 const projectId = serviceAccount.project_id;
