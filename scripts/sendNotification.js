@@ -1,15 +1,16 @@
-import fs from "fs";
 import { GoogleAuth } from "google-auth-library";
 import fetch from "node-fetch";
 
-// load service account dari env
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT env not set");
+}
+
 const serviceAccount = JSON.parse(
-  fs.readFileSync("serviceAccountKey.json", "utf8")
+  process.env.FIREBASE_SERVICE_ACCOUNT
 );
 
 const projectId = serviceAccount.project_id;
 
-// auth Google (OAuth2)
 const auth = new GoogleAuth({
   credentials: serviceAccount,
   scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
@@ -17,11 +18,11 @@ const auth = new GoogleAuth({
 
 async function sendNotification() {
   const client = await auth.getClient();
-  const accessToken = await client.getAccessToken();
+  const { token } = await client.getAccessToken();
 
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
-  const message = {
+  const payload = {
     message: {
       topic: "iot-alert",
       notification: {
@@ -38,14 +39,13 @@ async function sendNotification() {
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${accessToken.token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(message),
+    body: JSON.stringify(payload),
   });
 
-  const text = await res.text();
-  console.log("FCM response:", text);
+  console.log("FCM response:", await res.text());
 }
 
 sendNotification().catch(console.error);
