@@ -23,5 +23,5 @@ jobs:
 
       - name: Run notifier
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_KEY }}
         run: node scripts/sendNotification.js
