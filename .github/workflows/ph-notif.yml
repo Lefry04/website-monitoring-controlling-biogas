@@ -2,8 +2,7 @@ name: IoT PH Notification
 
 on:
   schedule:
-    # - cron: "*/5 * * * *"
-    - cron: "* * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
