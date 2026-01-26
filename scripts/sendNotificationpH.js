@@ -209,8 +209,8 @@ async function run() {
 
   // 1️⃣ AMBIL pH DARI RTDB
   const phSnap = await rtdb
-    .ref("ph_sensor_IDE/value")
-    .once("value");
+    .ref("tesnotif/ph")
+    .once("ph");
 
   const ph = phSnap.val();
   console.log("📊 pH:", ph);
