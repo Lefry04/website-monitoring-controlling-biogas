@@ -1,29 +1,24 @@
-name: PH Notification Checker
+name: IoT PH Notification
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # tiap 5 menit
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
-  run-ph-checker:
+  notify:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Run PH notification script
-        run: node scripts/sendNotificationpH.js
+      - name: Run PH Notifier
         env:
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_KEY }}
+        run: node scripts/sendNotificationpH.js
