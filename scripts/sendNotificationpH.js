@@ -193,11 +193,8 @@ const serviceAccount = JSON.parse(
 );
 
 admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  }), databaseURL:
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL:
     "https://tesdhtt-default-rtdb.firebaseio.com",
 });
 
